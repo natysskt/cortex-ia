@@ -1,17 +1,17 @@
 import streamlit as st
 import pandas as pd
-import requests
-import json
+import google.generativeai as genai
 import plotly.graph_objects as go
 
-# ==========================================
-# CONFIGURAÇÃO DA PÁGINA
-# ==========================================
+# Configura a Chave Mestra automaticamente
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+
 st.set_page_config(page_title="CORTEX - Intel", layout="wide")
 
+# (Mantenha o CSS original aqui...)
 st.markdown("""
     <style>
-    .stApp { background-color: #0d1117; color: #c9d1d9; font-family: 'Inter', sans-serif; }
+    .stApp { background-color: #0d1117; color: #c9d1d9; }
     .side-card { background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
     .card-title { font-size: 11px; font-weight: 600; letter-spacing: 2px; color: #8b949e; text-transform: uppercase; margin-bottom: 6px; }
     .center-container { text-align: center; padding-top: 15px; }
@@ -28,35 +28,13 @@ if 'taxa_risco' not in st.session_state:
 if 'dados_finais' not in st.session_state:
     st.session_state.dados_finais = None
 
-# Função Medidor
-
-
-def plotar_medidor_tecnico(taxa):
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=taxa,
-        gauge={
-            'axis': {'range': [0, 100], 'tickcolor': "#58a6ff"},
-            'bar': {'color': "#58a6ff"},
-            'bgcolor': "#0d1117",
-            'borderwidth': 1,
-            'bordercolor': "#30363d",
-            'steps': [{'range': [0, 100], 'color': '#161b22'}]
-        },
-        number={'font': {'color': "#f0f6fc", 'size': 30}}
-    ))
-    fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", font={
-                      'color': "#c9d1d9"}, height=200, margin=dict(l=20, r=20, t=20, b=20))
-    return fig
-
-
 # Layout
 col_esq, col_cen, col_dir = st.columns([1.2, 2, 1.2])
 
 with col_esq:
-    st.markdown('<div class="side-card"><div class="card-title">▩ CONFIGURAÇÃO & INGESTÃO</div></div>',
+    st.markdown('<div class="side-card"><div class="card-title">▩ INGESTÃO DE DADOS</div></div>',
                 unsafe_allow_html=True)
-    chave = st.text_input("Chave API do Gemini", type="password")
+    # AQUI O CAMPO DE INPUT DA CHAVE FOI REMOVIDO!
     arquivo = st.file_uploader("Upload da Base", type=["csv", "xlsx"])
 
     if arquivo and st.button("⚡ INICIAR VARREDURA (20K)"):
@@ -85,8 +63,12 @@ with col_cen:
 with col_dir:
     st.markdown('<div class="side-card"><div class="card-title">TAXA DE RISCO GLOBAL</div></div>',
                 unsafe_allow_html=True)
-    st.plotly_chart(plotar_medidor_tecnico(
-        st.session_state.taxa_risco), use_container_width=True)
+    # Medidor (simplificado)
+    fig = go.Figure(go.Indicator(mode="gauge+number",
+                    value=st.session_state.taxa_risco))
+    fig.update_layout(height=200, margin=dict(l=20, r=20, t=20, b=20),
+                      paper_bgcolor="rgba(0,0,0,0)", font={'color': "#c9d1d9"})
+    st.plotly_chart(fig, use_container_width=True)
 
 if st.session_state.dados_finais is not None:
     st.markdown("---")
